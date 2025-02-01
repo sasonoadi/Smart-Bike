@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>IoT Smart Bike Dashboard</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Leaflet CSS (Untuk OpenStreetMap) -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+
+    <!-- Google Fonts (Inter) -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet" />
+
+    <style>
+      /* Ukuran peta agar terlihat dengan baik */
+      #map {
+        width: 100%;
+        height: 300px;
+        border-radius: 10px;
+      }
+
+      /* Terapkan font dan pusatkan teks */
+      body {
+        font-family: "Inter", sans-serif;
+      }
+    </style>
+  </head>
+  <body class="min-h-screen bg-gray-100 space-y-8 p-6 pt-[80px]">
+    <!-- Header Tetap di Atas -->
+    <header class="fixed top-0 left-0 w-full bg-white shadow-md z-[2000] p-4">
+      <h1 class="text-3xl font-bold flex items-center gap-3"><img src="assets/sepeda.png" class="h-10" alt="Smart Bike Logo" /> IoT Smart Bike</h1>
+    </header>
+
+    <!-- Container Konten -->
+    <main class="max-w-6xl mx-auto mt-24 space-y-8 lg:space-y-0 lg:flex lg:gap-8">
+      <!-- Peta dan Konten Samping -->
+      <section class="lg:flex-1 space-y-8 lg:space-y-0">
+        <!-- Lokasi Real-Time -->
+        <div class="p-6 bg-white rounded-lg shadow-md">
+          <h2 class="text-xl font-semibold">Lokasi Sepeda</h2>
+          <div id="map" class="mt-4"></div>
+        </div>
+      </section>
+
+      <!-- Kontrol dan Monitoring Sensor -->
+      <section class="lg:w-[400px] space-y-8">
+        <!-- Monitoring Sensor -->
+        <div class="p-6 bg-white rounded-lg shadow-md">
+          <h2 class="text-xl font-semibold">Monitoring Sensor</h2>
+          <div class="mt-4">
+            <p>Kecepatan: <span id="speed" class="font-semibold">12</span> km/h</p>
+            <p>Suhu: <span id="temperature" class="font-semibold">30</span>°C</p>
+            <p>Baterai: <span id="battery" class="font-semibold">85</span>%</p>
+          </div>
+        </div>
+
+        <!-- Kontrol Sepeda -->
+        <div class="p-6 bg-white rounded-lg shadow-md">
+          <h2 class="text-xl font-semibold">Kontrol Sepeda</h2>
+          <div class="mt-4 space-y-4">
+            <button onclick="toggleLock()" class="w-full bg-gray-800 hover:bg-gray-900 text-white p-3 rounded-lg transition">🔓 Buka Kunci</button>
+            <button onclick="toggleLight()" class="w-full bg-yellow-600 hover:bg-yellow-700 text-white p-3 rounded-lg transition">💡 Nyalakan Lampu</button>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Riwayat Perjalanan -->
+    <section class="max-w-6xl mx-auto p-6 bg-white rounded-lg shadow-md">
+      <h2 class="text-xl font-semibold">Riwayat Perjalanan</h2>
+      <ul id="history" class="mt-4 space-y-2">
+        <li class="flex items-center gap-2">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5 text-blue-500">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M7 8h10M7 12h4m-2 8h6a2 2 0 002-2V6a2 2 0 00-2-2H9.414a2 2 0 00-1.414.586L5.586 5.586A2 2 0 005 7.414V20a2 2 0 002 2z" />
+          </svg>
+          <span>Perjalanan 1 - 5km - 20 Menit</span>
+        </li>
+        <li class="flex items-center gap-2">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5 text-blue-500">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M7 8h10M7 12h4m-2 8h6a2 2 0 002-2V6a2 2 0 00-2-2H9.414a2 2 0 00-1.414.586L5.586 5.586A2 2 0 005 7.414V20a2 2 0 002 2z" />
+          </svg>
+          <span>Perjalanan 2 - 7km - 30 Menit</span>
+        </li>
+      </ul>
+    </section>
+
+    <!-- Notifikasi Keamanan -->
+    <div class="p-6 bg-red-100 border-l-4 border-red-500 text-red-700 rounded-lg" id="securityAlert" style="display: none">🚨 Peringatan: Ada kemungkinan pencurian atau benturan!</div>
+
+    <!-- Leaflet JS (Untuk OpenStreetMap) -->
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+
+    <script>
+      // Koordinat default (contoh: Jakarta)
+      let latitude = -6.2088;
+      let longitude = 106.8456;
+
+      // Inisialisasi peta OSM
+      var map = L.map("map").setView([latitude, longitude], 15);
+
+      // Tambahkan layer OpenStreetMap
+      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        attribution: "© OpenStreetMap contributors",
+      }).addTo(map);
+
+      // Tambahkan marker lokasi sepeda
+      var marker = L.marker([latitude, longitude]).addTo(map).bindPopup("<b>Lokasi Sepeda</b><br>Smart Bike saat ini.").openPopup();
+    </script>
+  </body>
+</html>
